@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name">CodeViewerApp</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="open_file_txt">Open File</string>
+    <string name="settings_txt">Settings</string>
+    <string name="about_txt">About</string>
+    <string name="exit_txt">Exit App</string>
+    <string name="last_files_txt">Last Files</string>
+    <string name="greeting_msg">Welcome to CodeViewerApp!</string>
+    <string name="direction_msg">Start with a file!</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="hello_home_fragment">Hello, Home Fragment!</string>
+    <string name="home_txt">Home</string>
+    <string name="about_us_header">About Us</string>
+    <string name="version_info_header">Version</string>
+    <string name="version_info_txt">v0.1.0 (beta)</string>
+    <string name="developer_header">Developers</string>
+    <string name="developers_txt">Said ARSLAN - Berk Han TUGRUL</string>
+    <string name="year_copyright">© 2024</string>
+    <string name="open_source_licences">Open Source Licences</string>
+    <string name="remove_ads">Remove Ads</string>
+    <string name="visualization_header">Visual and Personalization</string>
+    <string name="show_line_numbers">Show Line Numbers</string>
+    <string name="change_theme">Change Theme (Light)</string>
+    <string name="language">Language: English</string>
+    <string name="change_recommend">Show Recommendations</string>
+    <string name="general_settings_hdr">General Settings</string>
+    <string name="settings_header">Settings</string>
+    <string name="home_greeting">Welcome to CodeViewerApp!</string>
+    <string name="home_direction">Start with opening a file!</string>
+    <string name="home_info">2024, COM4501</string>
+    <string name="home_direction_sub">or, you may select any menu from left drawer.</string>
+    <string name="open_nav">Open</string>
+    <string name="close_nav">Close</string>
+    <string name="last_files_info">Last Files will be listed at here.</string>
+    <string name="coding_txt">Coding Screen</string>
+    <string name="code_part_info_txt">Coding Part Details will be added here.</string>
+</resources>

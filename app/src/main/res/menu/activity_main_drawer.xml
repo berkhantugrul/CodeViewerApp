@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/home"
+            android:icon="@drawable/home_logo"
+            android:title="@string/home_txt" />
+        <item
+            android:id="@+id/coding_scr"
+            android:icon="@drawable/code_scr_logo"
+            android:title="@string/coding_txt" />
+        <item
+            android:id="@+id/open_file"
+            android:icon="@drawable/open_file_logo"
+            android:title="@string/open_file_txt" />
+        <item
+            android:id="@+id/last_files"
+            android:icon="@drawable/last_files_logo"
+            android:title="@string/last_files_txt" />
+        <item
+            android:id="@+id/settings"
+            android:icon="@drawable/settings_logo"
+            android:title="@string/settings_txt" />
+        <item
+            android:id="@+id/about"
+            android:icon="@drawable/about_logo"
+            android:title="@string/about_txt" />
+        <item
+            android:id="@+id/exit"
+            android:icon="@drawable/exit_logo"
+            android:title="@string/exit_txt" />
+
+    </group>
+</menu>
