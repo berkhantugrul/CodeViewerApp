@@ -5,27 +5,39 @@
     android:layout_height="match_parent"
     tools:context=".CodingFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:id="@+id/code_part_info"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:text="@string/code_part_info_txt"
-        android:textStyle="normal"
-        android:textSize="20sp"
-        android:layout_marginTop="30dp"
-        android:layout_marginStart="20dp"/>
+        android:layout_height="match_parent"
+        tools:ignore="UselessParent">
 
-    <com.amrdeveloper.codeview.CodeView
-        android:id="@+id/codeView"
-        android:layout_width="400dp"
-        android:layout_height="700dp"
-        android:background="#444444"
-        android:layout_marginTop="80dp"
-        android:layout_marginHorizontal="23dp"
-        android:dropDownSelector="#000000"
-        android:gravity="top"
-        android:text="@string/about_txt"
-        android:textColor="#FFFFFF" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
+            <TextView
+                android:id="@+id/code_part_info"
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="30dp"
+                android:text="@string/code_part_info_txt"
+                android:textSize="20sp"
+                android:textStyle="normal"
+                tools:ignore="TextSizeCheck" />
+
+            <com.amrdeveloper.codeview.CodeView
+                android:id="@+id/codeView"
+                android:layout_width="match_parent"
+                android:layout_height="800dp"
+                android:background="#444444"
+                android:layout_marginHorizontal="23dp"
+                android:layout_marginVertical="40dp"
+                android:dropDownSelector="#000000"
+                android:gravity="top"
+                android:text="@string/app_name"
+                android:textColor="#FFFFFF"
+                tools:ignore="VisualLintTextFieldSize" />
+        </LinearLayout>
+    </ScrollView>
 </FrameLayout>

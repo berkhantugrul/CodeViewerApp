@@ -15,6 +15,9 @@ import com.amrdeveloper.codeview.CodeView
 
 class CodingFragment : Fragment() {
 
+    private lateinit var codeView: CodeView
+    var code = ""
+
     private val pythonSnippets = mapOf(
         "for" to """ for i in range(n): 
     # Your code here
@@ -36,11 +39,15 @@ else:
         return inflater.inflate(R.layout.fragment_coding, container, false)
     }
 
+    // Dosya içeriğini CodeView'de görüntüleme
+    fun displayFileContent(content: String) {
+        code = content
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val codeView = view.findViewById<CodeView>(R.id.codeView)
+        codeView = view.findViewById(R.id.codeView)
 
         codeView.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_TAB && event.action == KeyEvent.ACTION_DOWN) {
@@ -202,8 +209,8 @@ else:
         codeView.addSyntaxPattern(Pattern.compile("#.*"), darkGreen)
         codeView.addSyntaxPattern(Pattern.compile("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\""), orange)
 
-
         codeView.setText(pythonCode)
+        //codeView.setText(code)
 
         // LINE NUMBERS
         codeView.setEnableLineNumber(true)

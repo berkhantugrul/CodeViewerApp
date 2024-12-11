@@ -14,19 +14,29 @@ import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import java.io.BufferedReader
-import java.io.IOException
 import java.io.InputStreamReader
+import androidx.activity.result.ActivityResultLauncher
+
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var drawerLayout: DrawerLayout
+    private lateinit var filePickerLauncher: ActivityResultLauncher<String>
 
+    /*
     // Dosya seçici için ActivityResultLauncher
     private val getFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
             readFile(uri)
         }
     }
+
+    private val startForResult = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result: ActivityResult ->
+        // Handle the result
+    }
+    */
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,8 +60,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             replaceFragment(HomeFragment())
             navigationView.setCheckedItem(R.id.home)
         }
-    }
 
+        // ActivityResultLauncher'ı burada kaydet
+        filePickerLauncher = registerForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) { uri: Uri? ->
+            uri?.let { openAndDisplayFile(it) }
+        }
+    }
+    /*
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.home -> replaceFragment(HomeFragment())
@@ -64,12 +81,32 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
         drawerLayout.closeDrawer(GravityCompat.START)
         return true
+    }*/
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.open_file -> {
+                // Dosya seçme işlemini başlat
+                filePickerLauncher.launch("text/*")
+            }
+            // Diğer işlemler
+            R.id.home -> replaceFragment(HomeFragment())
+            R.id.coding_scr -> replaceFragment(CodingFragment())
+            R.id.last_files -> replaceFragment(LastFilesFragment())
+            R.id.settings -> replaceFragment(SettingsFragment())
+            R.id.about -> replaceFragment(AboutFragment())
+            R.id.exit -> finish()
+
+        }
+        drawerLayout.closeDrawer(GravityCompat.START)
+        return true
     }
 
+    /*
     // Dosya seçici çağırma
     private fun openFilePicker() {
-        getFile.launch("*/*") // "*" tüm dosya türlerine izin verir
-    }
+        getFile.launch("**") // "*" tüm dosya türlerine izin verir
+    }*/
 
     private fun replaceFragment(fragment: Fragment)
     {
@@ -77,7 +114,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         transaction.replace(R.id.fragment_container, fragment)
         transaction.commit()
     }
-
+    /*
     override fun onBackPressed()
     {
         super.onBackPressed()
@@ -89,8 +126,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         {
             onBackPressedDispatcher.onBackPressed()
         }
-    }
+    }*/
 
+    /*
     // Seçilen dosyayı okuma
     private fun readFile(uri: Uri) {
         try {
@@ -105,6 +143,26 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         } catch (e: IOException) {
             e.printStackTrace()
             Toast.makeText(this, "Dosya okuma hatası", Toast.LENGTH_SHORT).show()
+        }
+    }*/
+
+    private fun openAndDisplayFile(uri: Uri) {
+        try {
+            // Dosyayı okuma
+            val inputStream = contentResolver.openInputStream(uri)
+            val reader = BufferedReader(InputStreamReader(inputStream))
+            val fileContent = reader.use { it.readText() }
+            reader.close()
+
+            // İçeriği bir TextView'e veya başka bir bileşene göster
+            val fragment = supportFragmentManager.findFragmentByTag("CodingFragment") as? CodingFragment
+            fragment?.displayFileContent(fileContent)
+            Toast.makeText(this, "File opened: $fileContent", Toast.LENGTH_LONG).show()
+        }
+        catch (e: Exception)
+        {
+            e.printStackTrace()
+            Toast.makeText(this, "File could not opened!", Toast.LENGTH_SHORT).show()
         }
     }
 }
