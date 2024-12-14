@@ -46,4 +46,7 @@
     <string name="coding_txt">Coding Screen</string>
     <string name="code_part_info_txt">Coding Part Details will be added here.</string>
     <string name="empty_text"> </string>
+    <string name="save_txt">Save</string>
+    <string name="save_file_txti">Save File</string>
+    <string name="save_file_txt">Save File</string>
 </resources>

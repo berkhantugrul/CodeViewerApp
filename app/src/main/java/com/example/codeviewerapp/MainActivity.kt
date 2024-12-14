@@ -17,15 +17,15 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import androidx.activity.result.ActivityResultLauncher
+import com.amrdeveloper.codeview.CodeView
 
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var drawerLayout: DrawerLayout
-    private lateinit var filePickerLauncher: ActivityResultLauncher<String>
+    private lateinit var codeView: CodeView
+    private var selectedFileUri: Uri? = null
+
 
     /*
     // Dosya seçici için ActivityResultLauncher
@@ -40,7 +40,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     ) { result: ActivityResult ->
         // Handle the result
     }
-    */
+
+
+    private fun writeTextToFile(uri: Uri, content: String): Boolean {
+        return try {
+            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(content.toByteArray())
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,12 +86,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             navigationView.setCheckedItem(R.id.home)
         }
 
-        // ActivityResultLauncher'ı burada kaydet
-        filePickerLauncher = registerForActivityResult(
-            ActivityResultContracts.GetContent()
-        ) { uri: Uri? ->
-            uri?.let { openAndDisplayFile(it) }
-        }
 
         drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
@@ -126,8 +132,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         when (item.itemId) {
             R.id.open_file -> {
                 // Dosya seçme işlemini başlat
-                filePickerLauncher.launch("text/*")
+                openFilePicker()
+
             }
+
+            R.id.save_file -> {
+                saveFilePicker()
+
+            }
+
             // Diğer işlemler
             R.id.home -> replaceFragment(HomeFragment())
             R.id.coding_scr -> replaceFragment(CodingFragment())
@@ -142,10 +155,105 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     /*
-    // Dosya seçici çağırma
-    private fun openFilePicker() {
-        getFile.launch("**") // "*" tüm dosya türlerine izin verir
+    private fun writeTextToFile(uri: Uri, content: String): Boolean {
+        return try {
+            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(content.toByteArray())
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }*/
+
+    private fun saveFilePicker() {
+        saveFileResult.launch("text/plain")  // Metin dosyasını oluşturmak için
+    }
+
+
+    /*
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uri ->
+                // Dosya URI'sini al
+                selectedFileUri = uri // URI'yi sakla
+                readTextFileContent(uri)?.let { content ->
+                    // İçeriği XML'e aktar
+                    updateTextViewWithContent(content)
+                }
+            }
+        }
+        else if (requestCode == REQUEST_CODE_OPEN_FILE && resultCode == RESULT_OK) {
+            val uri: Uri? = data?.data
+            uri?.let {
+                // Dosya yazma işlemi burada yapılır
+                writeToFile(uri)
+            }
+        }
+    }*/
+
+    private fun openFilePicker() {
+        openFileResult.launch("text/*")  // Metin dosyalarını seçmek için
+    }
+
+
+    private val openFileResult =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                // Dosya URI'si ile işlemi yap
+                selectedFileUri = uri
+                readTextFileContent(uri)?.let { content ->
+                    // İçeriği XML'e aktar
+                    updateTextViewWithContent(content)
+                }
+            }
+        }
+
+    private val saveFileResult =
+        registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri: Uri? ->
+            uri?.let {
+                Log.d("SaveFileResult", "Info: BURADA")
+                // Dosyaya yazma işlemini yap
+                writeToFile(uri)
+            }
+        }
+
+    private fun writeToFile(uri: Uri) {
+
+        // Dosyayı sıfırlayıp üzerine yazmak için 'openOutputStream' kullanıyoruz
+        contentResolver.openOutputStream(uri)?.use { outputStream ->
+            val writer = outputStream.bufferedWriter()
+            // Eski içeriği temizle ve yeni içeriği yaz - ESKIYI TEMIZLEMIYOR
+            writer.write(findViewById<CodeView>(R.id.codeView).text.toString())  // write() ile dosyayı temizleyip yeni içeriği ekliyoruz
+            writer.flush()
+        }
+    }
+    /*
+    companion object {
+        private const val FILE_PICKER_REQUEST_CODE = 1
+        private const val REQUEST_CODE_OPEN_FILE = 1
+
+    }*/
+
+    private fun readTextFileContent(uri: Uri): String? {
+        try {
+            contentResolver.openInputStream(uri)?.use { inputStream ->
+                val bufferedReader = inputStream.bufferedReader()
+                return bufferedReader.readText()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+
+    private fun updateTextViewWithContent(content: String) {
+        findViewById<CodeView>(R.id.codeView).setText(content)
+        Toast.makeText(this, "File opened.", Toast.LENGTH_SHORT).show()
+    }
 
     private fun replaceFragment(fragment: Fragment)
     {
@@ -153,19 +261,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         transaction.replace(R.id.fragment_container, fragment)
         transaction.commit()
     }
-    /*
-    override fun onBackPressed()
-    {
-        super.onBackPressed()
-        if (drawerLayout.isDrawerOpen(GravityCompat.START))
-        {
-            drawerLayout.closeDrawer(GravityCompat.START)
-        }
-        else
-        {
-            onBackPressedDispatcher.onBackPressed()
-        }
-    }*/
 
     /*
     // Seçilen dosyayı okuma
@@ -183,7 +278,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             e.printStackTrace()
             Toast.makeText(this, "Dosya okuma hatası", Toast.LENGTH_SHORT).show()
         }
-    }*/
+    }
 
     private fun openAndDisplayFile(uri: Uri) {
         try {
@@ -203,7 +298,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             e.printStackTrace()
             Toast.makeText(this, "File could not opened!", Toast.LENGTH_SHORT).show()
         }
-    }
+    }*/
 
     private fun hideKeyboard() {
         val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager

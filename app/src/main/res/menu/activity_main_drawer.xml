@@ -17,6 +17,10 @@
             android:icon="@drawable/open_file_logo"
             android:title="@string/open_file_txt" />
         <item
+            android:id="@+id/save_file"
+            android:icon="@drawable/baseline_save_alt_24"
+            android:title="@string/save_file_txt" />
+        <item
             android:id="@+id/last_files"
             android:icon="@drawable/last_files_logo"
             android:title="@string/last_files_txt" />

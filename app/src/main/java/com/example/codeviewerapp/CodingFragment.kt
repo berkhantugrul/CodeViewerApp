@@ -1,6 +1,7 @@
 package com.example.codeviewerapp
 
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -10,13 +11,20 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.Toast
 import java.util.regex.Pattern
 import com.amrdeveloper.codeview.CodeView
+import com.example.codeviewerapp.databinding.FragmentCodingBinding
 
 class CodingFragment : Fragment() {
 
+    private var _binding: FragmentCodingBinding? = null
+    private val binding get() = _binding!!
     private lateinit var codeView: CodeView
-    var code = ""
+    private lateinit var savebutton : Button
+
+    //var code = ""
 
     private val pythonSnippets = mapOf(
         "for" to """ for i in range(n): 
@@ -34,20 +42,34 @@ else:
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_coding, container, false)
+    ): View {
+        _binding = FragmentCodingBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
-    // Dosya içeriğini CodeView'de görüntüleme
-    fun displayFileContent(content: String) {
-        code = content
-    }
+    /*
+    // Dosya içeriğini buraya yükle
+    fun loadFile(uri: Uri?) {
+        uri?.let {
+            // Dosyayı okuma işlemi ve codeView'a yazdırma
+            val content = readFileContent(it)
+            code = content
+        }
+    }*/
+
+    /*
+    private fun readFileContent(uri: Uri): String {
+        val contentResolver = context?.contentResolver
+        val inputStream = contentResolver?.openInputStream(uri)
+        val reader = inputStream?.bufferedReader()
+        return reader?.use { it.readText() } ?: ""
+    }*/
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         codeView = view.findViewById(R.id.codeView)
+        //savebutton = view.findViewById(R.id.saveButton)
 
         codeView.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_TAB && event.action == KeyEvent.ACTION_DOWN) {
@@ -60,6 +82,21 @@ else:
             }
         }
 
+        /*
+        // Argümanları al
+        val fileUri: Uri? = arguments?.getParcelable("file_uri")
+
+        // Örneğin, dosyaya yazmayı burada da yapabilirsiniz
+        savebutton.setOnClickListener {
+            val updatedContent = binding.codeView.text.toString()
+            fileUri?.let { uri ->
+                if (writeTextToFile(uri, updatedContent)) {
+                    Toast.makeText(requireContext(), "Dosya basariyla kaydedildi", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "Dosya kaydedilirken bir hata olustu", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }*/
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TextWatcher ile kullanıcı girişini izleme
@@ -209,7 +246,7 @@ else:
         codeView.addSyntaxPattern(Pattern.compile("#.*"), darkGreen)
         codeView.addSyntaxPattern(Pattern.compile("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\""), orange)
 
-        codeView.setText(pythonCode)
+        //codeView.setText(pythonCode)
         //codeView.setText(code)
 
         // LINE NUMBERS
@@ -240,4 +277,6 @@ else:
 
 
     }
+
+
 }
