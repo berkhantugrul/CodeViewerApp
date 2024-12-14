@@ -4,6 +4,7 @@ import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.Keyboard
 import android.inputmethodservice.KeyboardView
 import android.view.View
+import androidx.core.content.ContextCompat
 
 class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardActionListener {
 
@@ -18,8 +19,33 @@ class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAction
         keyboardView.keyboard = keyboard
         keyboardView.setOnKeyboardActionListener(this)
 
+        // Tuşların renklerini ayarlayın
+        //updateKeyColors()
+
         return keyboardView
     }
+
+    /*
+    private fun updateKeyColors() {
+        val keys = keyboard.keys
+
+        // İlk iki satırdaki tuşların rengini değiştir
+        keys.forEachIndexed { index, key ->
+            // İlk iki satırdaki tuşların rengini değiştirelim
+            when (index) {
+                in 0..20 -> { // İlk 6 tuşun rengini değiştir
+                    key.icon = ContextCompat.getDrawable(this, R.drawable.key_sym_background) // Özel icon
+                }
+                in 21..58 -> { // 7. ve 12. tuşlar
+                    key.icon = ContextCompat.getDrawable(this, R.drawable.key_background) // Yeşil icon
+                }
+                in 59..63 -> { // Son 10 tuş
+                    key.icon = ContextCompat.getDrawable(this, R.drawable.key_sym_background) // Koyu gri icon
+                }
+            }
+        }
+        keyboardView?.invalidateAllKeys() // Klavyeyi güncelle
+    }*/
 
     // Tuşa basıldığında yapılacak işlemler
     override fun onPress(primaryCode: Int) {
@@ -41,7 +67,9 @@ class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAction
             '(' to ')',
             '{' to '}',
             '[' to ']',
-            '"' to '"'
+            '"' to '"',
+            '\'' to '\'',
+            '<' to '>'
         )
 
         when (primaryCode) {
@@ -69,6 +97,14 @@ class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAction
                 // Normal silme işlemi
                 inputConnection.deleteSurroundingText(1, 0)
             }
+
+            //todo:Caps Lock state will be added
+            // Caps key
+            // .......
+
+
+
+
 
             // Tab tuşuna basıldığında
             9 -> {

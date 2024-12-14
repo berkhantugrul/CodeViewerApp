@@ -1,8 +1,12 @@
 package com.example.codeviewerapp
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -42,6 +46,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, SettingsFragment()) // SettingsFragment ilk ekleniyor
+                .commit()
+
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, CodingFragment(), CodingFragment::class.java.simpleName)
+                .commit() // CodingFragment ekleniyor
+        }
+
         drawerLayout = findViewById(R.id.drawer_layout)
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
@@ -53,7 +67,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open_nav, R.string.close_nav)
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
-
 
         if(savedInstanceState == null)
         {
@@ -67,7 +80,33 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         ) { uri: Uri? ->
             uri?.let { openAndDisplayFile(it) }
         }
+
+        drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
+            override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
+                // Çekmece kayarken yapılacak işlemler (isteğe bağlı)
+                hideKeyboard()
+            }
+
+            override fun onDrawerOpened(drawerView: View) {
+                // Çekmece açıldığında klavyeyi gizle
+                val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                val currentFocusView = currentFocus
+                currentFocusView?.let {
+                    inputMethodManager.hideSoftInputFromWindow(it.windowToken, 0)
+                }
+            }
+
+            override fun onDrawerClosed(drawerView: View) {
+                return
+            }
+
+            override fun onDrawerStateChanged(newState: Int) {
+                return
+            }
+        })
+
     }
+
     /*
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -163,6 +202,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         {
             e.printStackTrace()
             Toast.makeText(this, "File could not opened!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun hideKeyboard() {
+        val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val currentFocusView = currentFocus
+        currentFocusView?.let {
+            inputMethodManager.hideSoftInputFromWindow(it.windowToken, 0)
         }
     }
 }

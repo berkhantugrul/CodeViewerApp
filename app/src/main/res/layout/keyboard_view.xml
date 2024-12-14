@@ -6,5 +6,5 @@
     android:layout_height="wrap_content"
     android:background="@drawable/keyboard_view_background"
     android:keyBackground="@drawable/key_background"
-    android:padding="15dp">
+    android:padding="12dp">
 </android.inputmethodservice.KeyboardView>

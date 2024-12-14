@@ -226,6 +226,8 @@ else:
         codeView.addPairCompleteItem('"','"')
         codeView.addPairCompleteItem('(',')')
         codeView.addPairCompleteItem('{','}')
+        codeView.addPairCompleteItem('\'', '\'')
+        codeView.addPairCompleteItem('<','>')
 
         // TAB INDENTATION
         val chars = mutableSetOf(':')
