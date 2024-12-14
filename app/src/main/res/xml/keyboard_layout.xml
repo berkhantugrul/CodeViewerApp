@@ -60,18 +60,17 @@
         <Key android:codes="112" android:keyLabel="p" android:keyWidth="8.891%p"/>
     </Row>
 
-    <!-- 4th Line: Caps,ASDF... -->
+    <!-- 4th Line: ASDF... -->
     <Row>
-        <Key android:codes="-7" android:keyLabel="Caps" android:keyWidth="13%p"/>
-        <Key android:codes="97" android:keyLabel="a" android:keyWidth="8.4%p"/>
-        <Key android:codes="115" android:keyLabel="s" android:keyWidth="8.4%p"/>
-        <Key android:codes="100" android:keyLabel="d" android:keyWidth="8.4%p"/>
-        <Key android:codes="102" android:keyLabel="f" android:keyWidth="8.4%p"/>
-        <Key android:codes="103" android:keyLabel="g" android:keyWidth="8.4%p"/>
-        <Key android:codes="104" android:keyLabel="h" android:keyWidth="8.4%p"/>
-        <Key android:codes="106" android:keyLabel="j" android:keyWidth="8.4%p"/>
-        <Key android:codes="107" android:keyLabel="k" android:keyWidth="8.4%p"/>
-        <Key android:codes="108" android:keyLabel="l" android:keyWidth="8.4%p"/>
+        <Key android:codes="97" android:keyLabel="a" android:keyWidth="9.9%p"/>
+        <Key android:codes="115" android:keyLabel="s" android:keyWidth="9.9%p"/>
+        <Key android:codes="100" android:keyLabel="d" android:keyWidth="9.9%p"/>
+        <Key android:codes="102" android:keyLabel="f" android:keyWidth="9.9%p"/>
+        <Key android:codes="103" android:keyLabel="g" android:keyWidth="9.9%p"/>
+        <Key android:codes="104" android:keyLabel="h" android:keyWidth="9.9%p"/>
+        <Key android:codes="106" android:keyLabel="j" android:keyWidth="9.9%p"/>
+        <Key android:codes="107" android:keyLabel="k" android:keyWidth="9.9%p"/>
+        <Key android:codes="108" android:keyLabel="l" android:keyWidth="9.9%p"/>
     </Row>
 
     <!-- 5th Line: ZXCV... -->

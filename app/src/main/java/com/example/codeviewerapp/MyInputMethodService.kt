@@ -11,7 +11,6 @@ class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAction
     private lateinit var keyboardView: KeyboardView
     private lateinit var keyboard: Keyboard
     private var isShifted = false // Shift
-    //private var isCapsLock = false // Caps Lock
 
     override fun onCreateInputView(): View {
         keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardView
@@ -98,14 +97,6 @@ class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAction
                 inputConnection.deleteSurroundingText(1, 0)
             }
 
-            //todo:Caps Lock state will be added
-            // Caps key
-            // .......
-
-
-
-
-
             // Tab tuşuna basıldığında
             9 -> {
                 val spaces = "    " // 4 boşluk karakteri
@@ -115,7 +106,8 @@ class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAction
             // Shift tuşuna basıldığında (Shift tuşunun kodu 15)
             15 -> {
                 isShifted = !isShifted // Shift durumunu değiştir
-                updateShiftState() // Shift durumu güncelleniyor
+                keyboard.isShifted = isShifted // Klavyenin görünümünü güncelle
+                keyboardView.invalidateAllKeys() // Klavyeyi yeniden çiz
 
                 // Shift durumu değiştikten sonra yeni bir karakter eklemiyoruz,
                 // Shift'in etkisi yalnızca harf yazma işlemine etki eder.
@@ -123,28 +115,26 @@ class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAction
 
             // Diğer tuşlara basıldığında
             else -> {
-                var character = primaryCode.toChar() // Tuş kodunu karaktere dönüştür
+                // Shift durumuna göre yazılacak karakter
+                val char = primaryCode.toChar()
+                val text = if (isShifted) char.uppercaseChar() else char.lowercaseChar()
+                inputConnection.commitText(text.toString(), 1)
 
-                // Eğer Shift aktifse, harfi büyük yapıyoruz
-                if (isShifted) {
-                    character = character.toUpperCase() // Büyük harfe dönüştür
-                }
-
-                // Karakteri ekle
-                inputConnection.commitText(character.toString(), 1)
-
-                // Yazma işlemi tamamlandıktan sonra Shift'i sıfırla
+                /*
+                // Eğer Shift tuşuna basıldıktan sonra sadece bir kez büyük harf isteniyorsa,
+                // aşağıdaki satır ile Shift'i kapatabilirsiniz:
                 isShifted = false
-                updateShiftState() // Shift durumunu sıfırla
+                keyboard.isShifted = false
+                keyboardView.invalidateAllKeys()*/
             }
         }
     }
 
-
     private fun updateShiftState() {
-        // val keyboardView = currentInputView as KeyboardView
-        keyboardView.isShifted = isShifted // Shift durumu güncelleniyor
+        keyboard.isShifted = isShifted
+        keyboardView.invalidateAllKeys() // Tüm tuşları yeniden çiz
     }
+
 
     override fun onText(text: CharSequence?) {}
     override fun swipeLeft() {}
