@@ -1,7 +1,6 @@
 package com.example.codeviewerapp
 
 import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -12,7 +11,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.Toast
 import java.util.regex.Pattern
 import com.amrdeveloper.codeview.CodeView
 import com.example.codeviewerapp.databinding.FragmentCodingBinding
@@ -22,7 +20,7 @@ class CodingFragment : Fragment() {
     private var _binding: FragmentCodingBinding? = null
     private val binding get() = _binding!!
     private lateinit var codeView: CodeView
-    private lateinit var savebutton : Button
+    //private lateinit var savebutton : Button
 
     //var code = ""
 
@@ -44,6 +42,7 @@ else:
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentCodingBinding.inflate(inflater, container, false)
+
         return binding.root
     }
 

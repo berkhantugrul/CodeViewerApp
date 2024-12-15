@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp"
+    android:layout_marginBottom="8dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <!-- Dosya Adı -->
+    <TextView
+        android:id="@+id/fileName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="FileName"
+        android:textSize="16sp"
+        android:padding="4dp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText" />
+
+    <!-- Dosya Boyutu -->
+    <TextView
+        android:id="@+id/fileSize"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Size: 0 KB"
+        android:textSize="14sp"
+        android:padding="4dp"
+        tools:ignore="HardcodedText" />
+
+    <!-- Dosya Uzantısı -->
+    <TextView
+        android:id="@+id/fileExtension"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Extension: txt"
+        android:textSize="14sp"
+        android:padding="4dp"
+        tools:ignore="HardcodedText" />
+
+    <!-- Dosya Yolu -->
+    <TextView
+        android:id="@+id/filePath"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Path: /path/to/file"
+        android:textSize="12sp"
+        android:padding="4dp"
+        tools:ignore="HardcodedText" />
+</LinearLayout>
