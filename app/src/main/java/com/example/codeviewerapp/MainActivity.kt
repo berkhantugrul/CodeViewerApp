@@ -1,5 +1,6 @@
 package com.example.codeviewerapp
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -8,7 +9,11 @@ import android.provider.OpenableColumns
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
+import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -28,7 +33,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     //private lateinit var codeView: CodeView
     private var selectedFileUri: Uri? = null
     private lateinit var fileRepository: FileRepository
-
+    private var selectedMimeType: String = "text/*" // Varsayılan MIME türü
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,11 +97,74 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     }
 
+    // Spinner'ı bir AlertDialog içinde göster
+    private fun showLanguagePickerDialog() {
+        val dialogBuilder = AlertDialog.Builder(this)
+        val spinner = Spinner(this)
+
+        // LinearLayout oluşturuluyor
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 27, 36, 27) // Padding (dp değerini pixel'e dönüştürmek için kullanılacak)
+        }
+
+        // Spinner'a diller eklenir
+        val languages = arrayOf("Python", "C", "C++", "Text")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, languages)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        // Spinner'ı layout'a ekleyin
+        layout.addView(spinner)
+
+        dialogBuilder.setTitle("Choose a type.")
+        dialogBuilder.setView(layout)
+
+        dialogBuilder.setPositiveButton("OK") { _, _ ->
+            // Seçilen dile göre MIME türünü al
+            selectedMimeType = getMimeTypeForLanguage(spinner.selectedItem.toString())
+            openFilePicker() // Dosya seçici başlat
+        }
+
+        dialogBuilder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        val dialog = dialogBuilder.create()
+
+        // Dialog boyutunu ayarlamak için burada window parametrelerini kullanıyoruz
+        dialog.setOnShowListener {
+            val window = dialog.window
+            window?.setLayout(
+                WindowManager.LayoutParams.MATCH_PARENT, // Genişlik
+                600 // Yükseklik (pixel cinsinden örnek bir değer)
+            )
+        }
+
+        dialog.show()
+    }
+
+    // Seçilen dile göre MIME türünü döner
+    private fun getMimeTypeForLanguage(language: String): String {
+        return when (language) {
+            "Python" -> "text/x-python"   // Python dosyaları
+            "C" -> "text/x-csrc"          // C dosyaları
+            "C++" -> "text/x-c++src"      // C++ dosyaları
+            "Text" -> "text/plain"        // TXT dosyaları
+            else -> "text/*"              // Varsayılan metin türü
+        }
+    }
+
+    // Dosya seçici başlatılır
+    private fun openFilePicker() {
+        openFileResult.launch(selectedMimeType)
+    }
+
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.open_file -> {
                 // Dosya seçme işlemini başlat
-                openFilePicker()
+                showLanguagePickerDialog()
                 replaceFragment(CodingFragment())
             }
 
@@ -126,10 +194,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun saveFilePicker() {
         saveFileResult.launch("text/plain")  // Metin dosyasını oluşturmak için
-    }
-
-    private fun openFilePicker() {
-        openFileResult.launch("text/*")  // Metin dosyalarını seçmek için , python/*, csrc/*, c++src/*
     }
 
     private val openFileResult =
