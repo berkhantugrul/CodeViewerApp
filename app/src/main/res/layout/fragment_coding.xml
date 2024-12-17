@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:onClick="saveFile"
     tools:context=".CodingFragment">
 
     <ScrollView
@@ -16,15 +15,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!--
-            <Button
-                android:id="@+id/saveButton"
-                android:layout_width="100dp"
-                android:layout_height="50dp"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginTop="50dp"
-                android:text="@string/save_txt"
-                android:textSize="15sp" />-->
 
             <com.amrdeveloper.codeview.CodeView
                 android:id="@+id/codeView"
@@ -33,7 +23,7 @@
                 android:layout_marginEnd="20dp"
                 android:layout_height="800dp"
                 android:layout_marginHorizontal="23dp"
-                android:layout_marginVertical="40dp"
+                android:layout_marginVertical="25dp"
                 android:background="#444444"
                 android:dropDownSelector="#000000"
                 android:gravity="top"

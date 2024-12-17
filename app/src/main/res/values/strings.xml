@@ -25,7 +25,7 @@
     <string name="version_info_header">Version</string>
     <string name="version_info_txt">v0.1.0 (beta)</string>
     <string name="developer_header">Developers</string>
-    <string name="developers_txt">Said ARSLAN - Berk Han TUGRUL</string>
+    <string name="developers_txt">Berk Han TUGRUL - Said ARSLAN</string>
     <string name="year_copyright">© 2024</string>
     <string name="open_source_licences">Open Source Licences</string>
     <string name="remove_ads">Remove Ads</string>
@@ -49,10 +49,5 @@
     <string name="save_txt">Save</string>
     <string name="save_file_txti">Save File</string>
     <string name="save_file_txt">Save File</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
     <string name="last_files_act_header">Last Files Database</string>
 </resources>

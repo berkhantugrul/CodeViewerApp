@@ -3,7 +3,10 @@ package com.example.codeviewerapp
 import android.inputmethodservice.InputMethodService
 import android.inputmethodservice.Keyboard
 import android.inputmethodservice.KeyboardView
+import android.text.InputType
+import android.util.Log
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import androidx.core.content.ContextCompat
 
 class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardActionListener {
@@ -59,6 +62,21 @@ class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAction
         keyboardView.invalidate()  // Görünümü tekrar günceller
     }
 
+    // Klavye görünür hale geldiğinde çağrılan metod
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+
+        // Burada klavye başlangıcında yapılacak işlemleri yapabilirsiniz
+        // Örneğin, klavye görünümünü özelleştirebilirsiniz
+        Log.d("ShiftKeyInputMethodService", "Klavye başlatıldı")
+
+        // Giriş türünü kontrol etme, örneğin bir şifre alanıysa farklı bir klavye tipi göstermek isteyebilirsiniz
+        if (info?.inputType == InputType.TYPE_CLASS_TEXT) {
+            // Yazı tipi için belirli bir davranış sergileyebilirsiniz
+            // Örneğin, numara alanıysa farklı bir klavye tipi göstermek
+        }
+    }
+
     override fun onKey(primaryCode: Int, keyCodes: IntArray?) {
         val inputConnection = currentInputConnection
 
@@ -111,6 +129,17 @@ class MyInputMethodService : InputMethodService(), KeyboardView.OnKeyboardAction
 
                 // Shift durumu değiştikten sonra yeni bir karakter eklemiyoruz,
                 // Shift'in etkisi yalnızca harf yazma işlemine etki eder.
+            }
+
+            41 -> {
+                // Kapanış parantezi olduğunda, herhangi bir işlem yapma
+                val textBeforeCursor = inputConnection.getTextBeforeCursor(1, 0).toString()
+
+                // Eğer açılmamış bir parantez yoksa, yani önceki parantez eşleşiyorsa, işlem yapma
+                if (textBeforeCursor.contains("(")) {
+                    // Zaten bir açılış parantezi var, işlem yapma
+                    return
+                }
             }
 
             // Diğer tuşlara basıldığında

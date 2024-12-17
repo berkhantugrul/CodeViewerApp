@@ -195,7 +195,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         val suggestedFileName = when (selectedMimeType) {
             "text/plain" -> "new_file.txt"
-            "application/python" -> "new_file.py"
+            "text/x-python" -> "new_file.py"
             "text/x-csrc" -> "new_file.c"
             "text/x-c++src" -> "new_file.cpp"
             else -> "new_file.txt"
@@ -220,7 +220,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     updateTextViewWithContent(content)
                 }
                 saveFileToDatabase(it)
-                Toast.makeText(this, "File saved on DB.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "File opened and saved on DB.", Toast.LENGTH_LONG).show()
             }
         }
 

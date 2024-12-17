@@ -1,5 +1,6 @@
 package com.example.codeviewerapp
 
+import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
@@ -14,7 +15,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import java.util.regex.Pattern
-import androidx.fragment.app.activityViewModels
 import com.amrdeveloper.codeview.CodeView
 import com.example.codeviewerapp.databinding.FragmentCodingBinding
 
@@ -24,7 +24,7 @@ class CodingFragment : Fragment() {
     private lateinit var sharedPreferences: SharedPreferences
     private var fileExtension: String? = null
     private var fileContent : String? = null
-    private val codeViewModel: CodeViewModel by activityViewModels()
+    private var selectedLanguage: String? = null
 
     //var code = ""
 
@@ -48,9 +48,11 @@ else:
 
         // Fragment'ı bağla
         val binding = FragmentCodingBinding.inflate(inflater, container, false)
-        val rootView = binding.root
 
-        codeView = binding.codeView
+        // CodeView'e zoom desteği ekliyoruz
+        codeView = binding.codeView // CodeView'i binding'den alıyoruz
+
+
 
         // Arguments'ten dosya uzantısını al
         fileExtension = arguments?.getString("fileExtension")
@@ -72,15 +74,43 @@ else:
         // Satır numaralarını göster/gizle
         setLineNumbers(isShowLineNumbers)
 
-        return rootView
+
+        return binding.root
     }
 
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         codeView = view.findViewById(R.id.codeView)
-        //savebutton = view.findViewById(R.id.saveButton)
+        // val spinner: Spinner = view.findViewById(R.id.type_selector)
+        // val languages = listOf("Text", "Python", "C", "C++")
+
+        /*
+        // Adapter oluştur ve Spinner'a ata
+        spinner.adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            languages
+        ).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+
+        // Spinner'dan seçilen öğeyi dinle
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // Seçilen öğeyi değişkene ata
+                selectedLanguage = languages[position]
+                Toast.makeText(requireContext(), "Seçilen dil: $selectedLanguage", Toast.LENGTH_SHORT).show()
+                Log.d("Selected Language", "$selectedLanguage")
+                //println("Seçilen dil: $selectedLanguage")
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Hiçbir şey seçilmezse burası çalışır
+            }
+        }*/
 
 
         codeView.setOnKeyListener { _, keyCode, event ->
@@ -108,49 +138,108 @@ else:
             override fun afterTextChanged(s: Editable?) {
                 if (!isTextWatcherActive) return // Recursive tetiklemeyi önle
 
-                try {
-                    val cursorPosition = codeView.selectionStart // İmlecin pozisyonu
-                    val text = codeView.text.toString() // Mevcut metin
+                if (selectedLanguage == "Python") {
+                    try {
+                        val cursorPosition = codeView.selectionStart // İmlecin pozisyonu
+                        val text = codeView.text.toString() // Mevcut metin
 
-                    // İmlecin solundaki metni bul
-                    val beforeCursorText = text.substring(0, cursorPosition)
-                    val lastWord = beforeCursorText.split("\\s+".toRegex()).lastOrNull() ?: return
+                        // İmlecin solundaki metni bul
+                        val beforeCursorText = text.substring(0, cursorPosition)
+                        val lastWord =
+                            beforeCursorText.split("\\s+".toRegex()).lastOrNull() ?: return
 
-                    // Snippet'leri kontrol et
-                    val snippet = when (lastWord) {
-                        "if" -> """
-                    if condition:
-                        # your code
-                    else:
-                        # your code
-                """.trimIndent()
-                        "for" -> """
-                    for i in range(n):
-                        # your code
-                    
-                """.trimIndent()
-                        "while" -> """
-                    while condition:
-                        # your code
-                    
-                """.trimIndent()
-                        else -> null
+                        // Snippet'leri kontrol et
+                        val snippet = when (lastWord) {
+                            "if" -> """
+                        if condition:
+                            # your code
+                        else:
+                            # your code
+                    """.trimIndent()
+
+                            "for" -> """
+                        for i in range(n):
+                            # your code
+                        
+                    """.trimIndent()
+
+                            "while" -> """
+                        while condition:
+                            # your code
+                        
+                    """.trimIndent()
+
+                            else -> null
+                        }
+
+                        snippet?.let {
+                            // Recursive tetiklemeyi önlemek için bayrağı devre dışı bırak
+                            isTextWatcherActive = false
+
+                            // Kelimeyi snippet ile değiştir
+                            val startIndex = cursorPosition - lastWord.length
+                            codeView.text.replace(startIndex, cursorPosition, it)
+                            codeView.setSelection(startIndex + it.length) // İmleci yeni bloğa taşı
+
+                            // Bayrağı tekrar etkinleştir
+                            isTextWatcherActive = true
+                        }
+                    } catch (e: Exception) {
+                        Log.e("CodeViewSnippet", "Error in snippet replacement", e)
                     }
+                }
 
-                    snippet?.let {
-                        // Recursive tetiklemeyi önlemek için bayrağı devre dışı bırak
-                        isTextWatcherActive = false
+                else if (selectedLanguage == "C" || selectedLanguage == "C++")  {
+                    try {
+                        val cursorPosition = codeView.selectionStart // İmlecin pozisyonu
+                        val text = codeView.text.toString() // Mevcut metin
 
-                        // Kelimeyi snippet ile değiştir
-                        val startIndex = cursorPosition - lastWord.length
-                        codeView.text.replace(startIndex, cursorPosition, it)
-                        codeView.setSelection(startIndex + it.length) // İmleci yeni bloğa taşı
+                        // İmlecin solundaki metni bul
+                        val beforeCursorText = text.substring(0, cursorPosition)
+                        val lastWord =
+                            beforeCursorText.split("\\s+".toRegex()).lastOrNull() ?: return
 
-                        // Bayrağı tekrar etkinleştir
-                        isTextWatcherActive = true
+                        // Snippet'leri kontrol et
+                        val snippet = when (lastWord) {
+                            "if" -> """
+                        if (condition) {
+                                // your code
+                            }
+                            else {
+                                // your code
+                            }
+                    """.trimIndent()
+
+                            "for" -> """
+                        for (int i = 0; i<n; i++) {
+                                // your code
+                            }
+                    """.trimIndent()
+
+                            "while" -> """
+                        while (condition) {
+                                // your code
+                            }
+                    """.trimIndent()
+
+                            else -> null
+                        }
+
+                        snippet?.let {
+                            // Recursive tetiklemeyi önlemek için bayrağı devre dışı bırak
+                            isTextWatcherActive = false
+
+                            // Kelimeyi snippet ile değiştir
+                            val startIndex = cursorPosition - lastWord.length
+                            codeView.text.replace(startIndex, cursorPosition, it)
+                            codeView.setSelection(startIndex + it.length) // İmleci yeni bloğa taşı
+
+                            // Bayrağı tekrar etkinleştir
+                            isTextWatcherActive = true
+                        }
+                    } catch (e: Exception) {
+                        Log.e("CodeViewSnippet", "Error in snippet replacement", e)
                     }
-                } catch (e: Exception) {
-                    Log.e("CodeViewSnippet", "Error in snippet replacement", e)
                 }
             }
         })
@@ -184,7 +273,6 @@ else:
         }
     }
 
-
     private fun loadFileContent(fileContent: String) {
         // CodeView'e içeriği ayarla
         codeView.setText(fileContent)
@@ -201,7 +289,13 @@ else:
 
         // CodeView'in yüksekliğini ayarla
         val layoutParams = codeView.layoutParams as LinearLayout.LayoutParams
-        layoutParams.height = totalHeight  // Yüksekliği hesapla ve ayarla
+
+        if (lineCount > 38)
+            layoutParams.height = totalHeight
+        else
+            layoutParams.height = 38 * lineHeight
+
+        // Yüksekliği hesapla ve ayarla
         codeView.layoutParams = layoutParams
     }
 
@@ -223,10 +317,10 @@ else:
         }
     }
 
+    // DOSYA ACMA ISLEMLER ICIN
     private fun applyCode(codeView: CodeView, code: String?, ext:String?) {
 
         val lightBlue = Color.rgb(65, 162, 241)
-        val orange = Color.rgb(148, 54, 10)
         val lightOrange = Color.rgb(252,160,2)
         val darkGreen = Color.rgb(68, 160, 72)
         val turquoise = Color.rgb(0, 183, 255)
@@ -235,36 +329,68 @@ else:
         val lightRed = Color.rgb(237, 83, 80)
         val yellow = Color.rgb(242, 236, 68)
 
-        if (ext == "py")
+        if (ext == "txt")
         {
+            codeView.addSyntaxPattern(Pattern.compile("[\\s\\S]*", Pattern.MULTILINE), Color.WHITE)
+        }
+
+        else {
+
             // Kontrol Yapıları ve Akış Kontrolü
-            codeView.addSyntaxPattern(Pattern.compile("\\bif\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\belse\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\belif\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bfor\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bwhile\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\btry\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bexcept\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bbreak\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bcontinue\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bpass\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\breturn\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\byield\\b", Pattern.MULTILINE), Color.MAGENTA)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\belse\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\belif\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bfinally\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\btry\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bexcept\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bbreak\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bpass\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\byield\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
 
             // Fonksiyon ve Değişken Tanımlamaları
             codeView.addSyntaxPattern(Pattern.compile("\\bdef\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\blambda\\b", Pattern.MULTILINE), blue)
 
             // İşlemciler ve Operatörler
-            codeView.addSyntaxPattern(Pattern.compile("\\band\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bor\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bnot\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bis\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bin\\b", Pattern.MULTILINE), blue)
 
             // Modüller ve İçe Aktarım
-            codeView.addSyntaxPattern(Pattern.compile("\\bimport\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bfrom\\b", Pattern.MULTILINE), Color.MAGENTA)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bimport\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bfrom\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
 
             // Değerler ve Veri Tipleri
             codeView.addSyntaxPattern(Pattern.compile("\\bTrue\\b", Pattern.MULTILINE), blue)
@@ -274,9 +400,18 @@ else:
             // Özel Anahtar Kelimeler
             codeView.addSyntaxPattern(Pattern.compile("\\bglobal\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bnonlocal\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bassert\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bdel\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\braise\\b", Pattern.MULTILINE), Color.MAGENTA)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bassert\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bdel\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\braise\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
 
             // Python Fonksiyonları (Built-in Fonksiyonlar - Sarı)
             codeView.addSyntaxPattern(Pattern.compile("\\babs\\b", Pattern.MULTILINE), yellow)
@@ -293,7 +428,6 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\beval\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bexec\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bfilter\\b", Pattern.MULTILINE), yellow)
-            codeView.addSyntaxPattern(Pattern.compile("\\bfloat\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bformat\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bfrozenset\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bgetattr\\b", Pattern.MULTILINE), yellow)
@@ -304,16 +438,25 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\bhex\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bid\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\binput\\b", Pattern.MULTILINE), yellow)
-            codeView.addSyntaxPattern(Pattern.compile("\\bint\\b", Pattern.MULTILINE), yellow)
-            codeView.addSyntaxPattern(Pattern.compile("\\bisinstance\\b", Pattern.MULTILINE), yellow)
-            codeView.addSyntaxPattern(Pattern.compile("\\bissubclass\\b", Pattern.MULTILINE), yellow)
+            codeView.addSyntaxPattern(Pattern.compile("\\bint\\b", Pattern.MULTILINE), blue)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bisinstance\\b", Pattern.MULTILINE),
+                yellow
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bissubclass\\b", Pattern.MULTILINE),
+                yellow
+            )
             codeView.addSyntaxPattern(Pattern.compile("\\biter\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\blen\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\blist\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\blocals\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bmap\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bmax\\b", Pattern.MULTILINE), yellow)
-            codeView.addSyntaxPattern(Pattern.compile("\\bmemoryview\\b", Pattern.MULTILINE), yellow)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bmemoryview\\b", Pattern.MULTILINE),
+                yellow
+            )
             codeView.addSyntaxPattern(Pattern.compile("\\bmin\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bnext\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bobject\\b", Pattern.MULTILINE), yellow)
@@ -331,7 +474,10 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\bsetattr\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bslice\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bsorted\\b", Pattern.MULTILINE), yellow)
-            codeView.addSyntaxPattern(Pattern.compile("\\bstaticmethod\\b", Pattern.MULTILINE), yellow)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bstaticmethod\\b", Pattern.MULTILINE),
+                yellow
+            )
             codeView.addSyntaxPattern(Pattern.compile("\\bstr\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bsum\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bsuper\\b", Pattern.MULTILINE), yellow)
@@ -339,23 +485,21 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\btype\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bvars\\b", Pattern.MULTILINE), yellow)
             codeView.addSyntaxPattern(Pattern.compile("\\bzip\\b", Pattern.MULTILINE), yellow)
-            codeView.addSyntaxPattern(Pattern.compile("\\b\\d+(\\.\\d+)?\\b", Pattern.MULTILINE), lightBlue)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\b\\d+(\\.\\d+)?\\b", Pattern.MULTILINE),
+                lightBlue
+            )
             codeView.addSyntaxPattern(Pattern.compile("\\bendl\\b", Pattern.MULTILINE), turquoise)
             codeView.addSyntaxPattern(Pattern.compile("#.*", Pattern.MULTILINE), darkGreen)
-            codeView.addSyntaxPattern(Pattern.compile("\\b\\d+\\b", Pattern.MULTILINE), lightBlue)
-            codeView.addSyntaxPattern(Pattern.compile("\"[^\"]*\"|\'[^\']*\'", Pattern.MULTILINE), lightOrange)
-            codeView.addSyntaxPattern(Pattern.compile("def\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\(", Pattern.MULTILINE), yellow) // user-defined function names
+
+            codeView.addSyntaxPattern(
+                Pattern.compile(
+                    "def\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\(",
+                    Pattern.MULTILINE
+                ), yellow
+            ) // user-defined function names
             //codeView.addSyntaxPattern(Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*)\\s*=", Pattern.MULTILINE), turquoise)
-        }
 
-        else if (ext == "txt")
-        {
-            codeView.addSyntaxPattern(Pattern.compile("[\\s\\S]*", Pattern.MULTILINE), Color.WHITE)
-        }
-
-        else if (ext == "c")
-        {
-            // codeView.addSyntaxPattern(Pattern.compile("[\\s\\S]*", Pattern.MULTILINE), orange)
 
             val cBuiltInFunctions = listOf(
                 "fclose", "fopen", "freopen", "fflush", "fseek", "ftell", "rewind",
@@ -363,64 +507,54 @@ else:
                 "fputc", "fputs", "fprintf", "fwrite", "putc", "putchar", "puts",
                 "printf", "scanf", "vprintf", "vsprintf", "sprintf", "main",
                 "perror", "clearerr", "feof", "ferror",
-                "setbuf", "setvbuf", "tempnam", "tmpfile", "tmpnam")
+                "setbuf", "setvbuf", "tempnam", "tmpfile", "tmpnam"
+            )
 
-            val regexPattern = cBuiltInFunctions.joinToString("|", prefix = "\\b(", postfix = ")\\b")
+            val regexPattern =
+                cBuiltInFunctions.joinToString("|", prefix = "\\b(", postfix = ")\\b")
             codeView.addSyntaxPattern(Pattern.compile(regexPattern), yellow)
 
-            codeView.addSyntaxPattern(Pattern.compile("\\bif\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\belse\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bfor\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bwhile\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bbreak\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bcontinue\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bswitch\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bcase\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bdo\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bdefault\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bgoto\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\breturn\\b", Pattern.MULTILINE), Color.MAGENTA)
+            codeView.addSyntaxPattern(Pattern.compile("#include", Pattern.MULTILINE),Color.MAGENTA)
 
-            codeView.addSyntaxPattern(Pattern.compile("\\bint\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bfloat\\b", Pattern.MULTILINE), blue)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bswitch\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bcase\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(Pattern.compile("\\bdo\\b", Pattern.MULTILINE), Color.MAGENTA)
+
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bgoto\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+
             codeView.addSyntaxPattern(Pattern.compile("\\bdouble\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bchar\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\blong\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bconst\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bstatic\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\benum\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\binline\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bextern\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bshort\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bsigned\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bunsigned\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bstruct\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\btypedef\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bregister\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\brestrict\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bvoid\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bsizeof\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bvolatile\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bunion\\b", Pattern.MULTILINE), blue)
 
-            codeView.addSyntaxPattern(Pattern.compile("def\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\(", Pattern.MULTILINE), yellow) // user-defined function names
-            codeView.addSyntaxPattern(Pattern.compile("\\b\\d+(\\.\\d+)?\\b", Pattern.MULTILINE), lightBlue)
-            codeView.addSyntaxPattern(Pattern.compile("(//.*$|/\\*.*?\\*/)", Pattern.MULTILINE), darkGreen)
             codeView.addSyntaxPattern(Pattern.compile("\\b\\d+\\b", Pattern.MULTILINE), lightBlue)
-            //codeView.addSyntaxPattern(Pattern.compile("\"[^\"]*\"|\'[^\']*\'", Pattern.MULTILINE), lightOrange)
-            codeView.addSyntaxPattern(Pattern.compile("<[^>]*>", Pattern.MULTILINE), lightRed) // <iostream>
-            codeView.addSyntaxPattern(Pattern.compile("#[^<]*", Pattern.MULTILINE), lightOrange) // #include
-        }
 
-        else if (ext == "cpp") {
-            // codeView.addSyntaxPattern(Pattern.compile("[\\s\\S]*", Pattern.MULTILINE), turquoise)
             val cppIOPattern = Pattern.compile(
-                "\\b(main|cin|cout|cerr|clog|getline|main|printf|fprintf|sprintf|vprintf|vsprintf|scanf|fscanf|sscanf|snprintf|vsnprintf|wcin|wcout|wcerr|wclog|wscanf|fwcin|fwcout|fwcerr|fwclog)\\b",
+                "\\b(main|cin|cout|cerr|clog|getline|printf|fprintf|sprintf|vprintf|vsprintf|scanf|fscanf|sscanf|snprintf|vsnprintf|wcin|wcout|wcerr|wclog|wscanf|fwcin|fwcout|fwcerr|fwclog)\\b",
                 Pattern.MULTILINE
             )
             codeView.addSyntaxPattern(cppIOPattern, yellow)
 
-            codeView.addSyntaxPattern(Pattern.compile("\\bint\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\balignas\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\balignof\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\band\\b", Pattern.MULTILINE), blue)
@@ -429,7 +563,6 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\bbitand\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bbitor\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bbool\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bchar\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bchar16_t\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bchar32_t\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bclass\\b", Pattern.MULTILINE), blue)
@@ -439,24 +572,23 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\bconst_cast\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bdecltype\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bdelete\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bdouble\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bdynamic_cast\\b", Pattern.MULTILINE), blue)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bdynamic_cast\\b", Pattern.MULTILINE),
+                blue
+            )
             codeView.addSyntaxPattern(Pattern.compile("\\bendl\\b", Pattern.MULTILINE), lightRed)
             codeView.addSyntaxPattern(Pattern.compile("\\benum\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bexplicit\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bexport\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bextern\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bfalse\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bfinal\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bfloat\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bfriend\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\binline\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bmutuable\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\blong\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bnamespace\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bnew\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bnoexcept\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bnot\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bnot_eq\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bnullptr\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\boperator\\b", Pattern.MULTILINE), blue)
@@ -464,10 +596,12 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\bprotected\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bpublic\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bregister\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\breinterpret_cast\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bshort\\b", Pattern.MULTILINE), blue)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\breinterpret_cast\\b", Pattern.MULTILINE),
+                blue
+            )
+
             codeView.addSyntaxPattern(Pattern.compile("\\bsigned\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bsizeof\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bnamespace\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bnew\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bnoexcept\\b", Pattern.MULTILINE), blue)
@@ -477,12 +611,18 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\boperator\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bprivate\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bstatic\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bstatic_assert\\b", Pattern.MULTILINE), blue)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bstatic_assert\\b", Pattern.MULTILINE),
+                blue
+            )
             codeView.addSyntaxPattern(Pattern.compile("\\bstatic_cast\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bstruct\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\btemplate\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bthis\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\bthread_local\\b", Pattern.MULTILINE), blue)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bthread_local\\b", Pattern.MULTILINE),
+                blue
+            )
             codeView.addSyntaxPattern(Pattern.compile("\\btypedef\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\btypeid\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\btypename\\b", Pattern.MULTILINE), blue)
@@ -492,39 +632,65 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\bvirtual\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bvolatile\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bvoid\\b", Pattern.MULTILINE), blue)
-            codeView.addSyntaxPattern(Pattern.compile("\\btrue\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bwchar_t\\b", Pattern.MULTILINE), blue)
 
-            codeView.addSyntaxPattern(Pattern.compile("\\bswitch\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bcase\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bbreak\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bcontinue\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bcatch\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bdefault\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\breturn\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\belse\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bif\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bdo\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bfor\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bgoto\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bthrow\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\btry\\b", Pattern.MULTILINE), Color.MAGENTA)
-            codeView.addSyntaxPattern(Pattern.compile("\\bwhile\\b", Pattern.MULTILINE), Color.MAGENTA)
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bcontinue\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bcatch\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bdefault\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\breturn\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
 
-            codeView.addSyntaxPattern(Pattern.compile("\\b\\d+(\\.\\d+)?\\b", Pattern.MULTILINE), lightBlue)
-            codeView.addSyntaxPattern(Pattern.compile("(//.*$|/\\*.*?\\*/)", Pattern.MULTILINE), darkGreen)
+            codeView.addSyntaxPattern(Pattern.compile("\\bif\\b", Pattern.MULTILINE), Color.MAGENTA)
+
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bfor\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bgoto\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bthrow\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+            codeView.addSyntaxPattern(
+                Pattern.compile("\\bwhile\\b", Pattern.MULTILINE),
+                Color.MAGENTA
+            )
+
+            codeView.addSyntaxPattern(
+                Pattern.compile("(//.*$|/\\*.*?\\*/)", Pattern.MULTILINE),
+                darkGreen
+            )
             codeView.addSyntaxPattern(Pattern.compile("\\b\\d+\\n\b", Pattern.MULTILINE), lightBlue)
-            codeView.addSyntaxPattern(Pattern.compile("\"[^\"]*\"|\'[^\']*\'", Pattern.MULTILINE), lightOrange)
-            codeView.addSyntaxPattern(Pattern.compile("<[^>]*>", Pattern.MULTILINE), lightRed) //<stdio.h>
-            codeView.addSyntaxPattern(Pattern.compile("#[^<]*", Pattern.MULTILINE), lightOrange) // #include
+            codeView.addSyntaxPattern(
+                Pattern.compile("\"[^\"]*\"|\'[^\']*\'", Pattern.MULTILINE),
+                lightOrange
+            )
+
+            codeView.addSyntaxPattern(
+                Pattern.compile("<stdio.h>", Pattern.MULTILINE),
+                lightRed
+            ) //<stdio.h>
+
+            codeView.addSyntaxPattern(
+                Pattern.compile("<iostream>", Pattern.MULTILINE),
+                lightRed
+            ) //<stdio.h>
             //codeView.addSyntaxPattern(Pattern.compile("using\\s+namespace\\s+[a-zA-Z_][a-zA-Z0-9_]*", Pattern.MULTILINE), orange) // user-defined function names
         }
-
-        else
-        {
-            codeView.addSyntaxPattern(Pattern.compile("[\\s\\S]*", Pattern.MULTILINE), Color.WHITE)
-        }
-
         //codeView.setText(pythonCode)
         //codeView.setText(code)
 
@@ -548,7 +714,7 @@ else:
         codeView.setBackgroundColor(Color.DKGRAY)
         codeView.setTextColor(Color.WHITE)
 
-        codeView.setText(code)
+        //codeView.setText(code)
 
         // CodeView'e içeriği yükle ve yüksekliği ayarla
         if (code != null) {
