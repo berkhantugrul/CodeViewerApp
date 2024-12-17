@@ -12,7 +12,11 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.LinearLayout
+import android.widget.Spinner
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.util.regex.Pattern
 import com.amrdeveloper.codeview.CodeView
@@ -25,6 +29,9 @@ class CodingFragment : Fragment() {
     private var fileExtension: String? = null
     private var fileContent : String? = null
     private var selectedLanguage: String? = null
+
+    private val languages = listOf("Text", "Python", "C", "C++")
+    private lateinit var spinnerFileType: Spinner
 
     //var code = ""
 
@@ -52,8 +59,6 @@ else:
         // CodeView'e zoom desteği ekliyoruz
         codeView = binding.codeView // CodeView'i binding'den alıyoruz
 
-
-
         // Arguments'ten dosya uzantısını al
         fileExtension = arguments?.getString("fileExtension")
         fileContent = arguments?.getString("fileContent")
@@ -78,40 +83,22 @@ else:
         return binding.root
     }
 
+    fun getSelectedExtension(): String {
+        return when (spinnerFileType.selectedItem.toString()) {
+            "Python" -> "py"
+            "C" -> "c"
+            "C++" -> "cpp"
+            else -> "txt"
+        }
+    }
+
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         codeView = view.findViewById(R.id.codeView)
-        // val spinner: Spinner = view.findViewById(R.id.type_selector)
-        // val languages = listOf("Text", "Python", "C", "C++")
-
-        /*
-        // Adapter oluştur ve Spinner'a ata
-        spinner.adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_item,
-            languages
-        ).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
-
-        // Spinner'dan seçilen öğeyi dinle
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                // Seçilen öğeyi değişkene ata
-                selectedLanguage = languages[position]
-                Toast.makeText(requireContext(), "Seçilen dil: $selectedLanguage", Toast.LENGTH_SHORT).show()
-                Log.d("Selected Language", "$selectedLanguage")
-                //println("Seçilen dil: $selectedLanguage")
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                // Hiçbir şey seçilmezse burası çalışır
-            }
-        }*/
-
+        spinnerFileType = view.findViewById(R.id.saveSpinner)
 
         codeView.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_TAB && event.action == KeyEvent.ACTION_DOWN) {
@@ -125,6 +112,17 @@ else:
 
         }
 
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, languages)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerFileType.adapter = adapter
+
+        // Eğer bir dil gönderildiyse spinner'ı güncelle
+        arguments?.getString("selectedLanguage")?.let { selectedLanguage ->
+            val selectedPosition = languages.indexOf(selectedLanguage)
+            if (selectedPosition >= 0) {
+                spinnerFileType.setSelection(selectedPosition)
+            }
+        }
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // TextWatcher ile kullanıcı girişini izleme
@@ -273,6 +271,20 @@ else:
         }
     }
 
+    fun updateSpinnerSelection(fileExtension: String?) {
+        val languages = listOf("Text", "Python", "C", "C++")
+        val spinnerSelection = when (fileExtension) {
+            "txt" -> "Text"
+            "py" -> "Python"
+            "c" -> "C"
+            "cpp" -> "C++"
+            else -> "Text" // Varsayılan değer
+        }
+        val spinner = view?.findViewById<Spinner>(R.id.saveSpinner)
+        spinner?.setSelection(languages.indexOf(spinnerSelection))
+    }
+
+
     private fun loadFileContent(fileContent: String) {
         // CodeView'e içeriği ayarla
         codeView.setText(fileContent)
@@ -381,6 +393,7 @@ else:
             codeView.addSyntaxPattern(Pattern.compile("\\bor\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bis\\b", Pattern.MULTILINE), blue)
             codeView.addSyntaxPattern(Pattern.compile("\\bin\\b", Pattern.MULTILINE), blue)
+            codeView.addSyntaxPattern(Pattern.compile("\\bstd\\b", Pattern.MULTILINE), lightGreen)
 
             // Modüller ve İçe Aktarım
             codeView.addSyntaxPattern(
@@ -681,12 +694,12 @@ else:
             )
 
             codeView.addSyntaxPattern(
-                Pattern.compile("<stdio.h>", Pattern.MULTILINE),
+                Pattern.compile("\\b<stdio.h>\\b", Pattern.MULTILINE),
                 lightRed
             ) //<stdio.h>
 
             codeView.addSyntaxPattern(
-                Pattern.compile("<iostream>", Pattern.MULTILINE),
+                Pattern.compile("\\b<iostream>\\b", Pattern.MULTILINE),
                 lightRed
             ) //<stdio.h>
             //codeView.addSyntaxPattern(Pattern.compile("using\\s+namespace\\s+[a-zA-Z_][a-zA-Z0-9_]*", Pattern.MULTILINE), orange) // user-defined function names

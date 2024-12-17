@@ -35,6 +35,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private var selectedFileUri: Uri? = null
     private lateinit var fileRepository: FileRepository
     private var selectedMimeType: String = "text/*" // Varsayılan MIME türü
+    //private var selectedSaveMimeType: String = "text/*" // Varsayılan MIME türü
+    private lateinit var codingFragment: CodingFragment
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +68,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
+        // ana sayfa acilir
         if(savedInstanceState == null)
         {
             replaceFragment(HomeFragment())
@@ -156,21 +160,27 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
-    // Dosya seçici başlatılır
-    private fun openFilePicker() {
-        openFileResult.launch(selectedMimeType)
-    }
 
+    // NavigationView icerisinde
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.open_file -> {
                 // Dosya seçme işlemini başlat
                 showLanguagePickerDialog()
                 replaceFragment(CodingFragment())
+
+                // NavigationView'deki seçili öğeyi sıfırla veya Coding'e geçir
+                val navigationView = findViewById<NavigationView>(R.id.nav_view)
+                navigationView.menu.findItem(R.id.open_file).isChecked = false
+                navigationView.menu.findItem(R.id.coding_scr)?.isChecked = true
             }
 
             R.id.save_file -> {
                 saveFilePicker()
+
+                val navigationView = findViewById<NavigationView>(R.id.nav_view)
+                navigationView.menu.findItem(R.id.save_file).isChecked = false
+                navigationView.menu.findItem(R.id.coding_scr)?.isChecked = true
             }
 
             // Diğer işlemler
@@ -191,20 +201,40 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
-    private fun saveFilePicker() {
 
-        val suggestedFileName = when (selectedMimeType) {
-            "text/plain" -> "new_file.txt"
-            "text/x-python" -> "new_file.py"
-            "text/x-csrc" -> "new_file.c"
-            "text/x-c++src" -> "new_file.cpp"
-            else -> "new_file.txt"
+    // Dosya seçici başlatılır
+    private fun openFilePicker() {
+        openFileResult.launch(selectedMimeType)
+    }
+
+    private fun saveFilePicker() {
+        val codingFragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as? CodingFragment
+        val selectedExtension = codingFragment?.getSelectedExtension() ?: "txt"
+
+        // Eğer cihazdan açılan bir dosya varsa uzantıyı koruyun
+        val suggestedFileName = if (selectedFileUri != null) {
+            val originalFileName = selectedFileUri?.path?.substringAfterLast("/") ?: ""
+            originalFileName
+        } else {
+            when (selectedExtension) {
+                "py" -> "new_file.py"
+                "c" -> "new_file.c"
+                "cpp" -> "new_file.cpp"
+                else -> "new_file.txt"
+            }
+        }
+
+        val mimeType = when (selectedExtension) {
+            "py" -> "text/x-python"
+            "c" -> "text/x-csrc"
+            "cpp" -> "text/x-c++src"
+            else -> "text/plain"
         }
 
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = selectedMimeType // Kaydedilecek MIME tipi
-            putExtra(Intent.EXTRA_TITLE, suggestedFileName) // Varsayılan dosya adı
+            type = mimeType
+            putExtra(Intent.EXTRA_TITLE, suggestedFileName)
         }
 
         saveFileResult.launch(intent)
@@ -213,16 +243,22 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private val openFileResult =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
-                // Dosya URI'si ile işlemi yap
-                selectedFileUri = uri
+                // Dosya adını ve uzantısını al
+                val fileName = it.lastPathSegment?.substringAfterLast("/")
+                val fileExtension = fileName?.substringAfterLast(".", "")
+
+                // Spinner güncellemek için CodingFragment'e gönder
+                val codingFragment = supportFragmentManager.findFragmentById(R.id.fragment_container) as? CodingFragment
+                codingFragment?.updateSpinnerSelection(fileExtension)
+
+                // İçeriği okuyup göstermek için mevcut işlemleri devam ettir
                 readTextFileContent(uri)?.let { content ->
-                    // İçeriği XML'e aktar
                     updateTextViewWithContent(content)
                 }
                 saveFileToDatabase(it)
-                Toast.makeText(this, "File opened and saved on DB.", Toast.LENGTH_LONG).show()
             }
         }
+
 
     private val saveFileResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -255,31 +291,61 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             contentResolver.openInputStream(uri)?.use { inputStream ->
                 val bufferedReader = inputStream.bufferedReader().use { it.readText() }
 
-                // Dosya içeriğini CodingFragment'e gönderiyoruz
-                val fileName = uri.path?.substringAfterLast("/")
-                val fileExtension = fileName?.substringAfterLast(".", "") ?: ""
+                // Dosya adını ve uzantısını al
+                val fileName = getFileName(uri)
+                val fileExtension = fileName?.let { getFileExtension(it) } ?: ""
 
-                Log.i("File Ext", "File$fileExtension")
-                // CodingFragment'e uzantıyı gönderiyoruz
-                val bundle = Bundle().apply {
-                    putString("fileExtension", fileExtension)
-                    putString("fileContent", bufferedReader)
+                // Uzantıya göre dil seçimi yap
+                val selectedLanguage = when (fileExtension.lowercase()) {
+                    "py" -> "Python"
+                    "c" -> "C"
+                    "cpp" -> "C++"
+                    else -> "Text"
                 }
 
-                // Kod içeriğini ve uzantıyı CodingFragment'e gönder
+                // CodingFragment'e dosya içeriği ve dil bilgisi gönder
                 val codingFragment = CodingFragment().apply {
-                    arguments = bundle
+                    arguments = Bundle().apply {
+                        putString("fileContent", bufferedReader)
+                        putString("selectedLanguage", selectedLanguage)
+
+                        if (fileName != null) {
+                            Log.d("File Info", "File Name: $fileName, Extension: $fileExtension, Language: $selectedLanguage")
+                        }
+                    // Seçili dili gönderiyoruz
+                    }
                 }
 
+                // Fragment'i değiştirme işlemi
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, codingFragment) // CodingFragment'ı göster
+                    .replace(R.id.fragment_container, codingFragment)
                     .commit()
             }
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
+            Toast.makeText(this, "Error reading file!", Toast.LENGTH_SHORT).show()
         }
         return null
+    }
+
+    private fun getFileName(uri: Uri): String? {
+        var fileName: String? = null
+        if (uri.scheme == "content") {
+            val cursor = contentResolver.query(uri, null, null, null, null)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    fileName = it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+                }
+            }
+        }
+        if (fileName == null) {
+            fileName = uri.path?.substringAfterLast('/')
+        }
+        return fileName
+    }
+
+    private fun getFileExtension(fileName: String): String {
+        return fileName.substringAfterLast('.', "")
     }
 
     private fun updateTextViewWithContent(content: String) {
