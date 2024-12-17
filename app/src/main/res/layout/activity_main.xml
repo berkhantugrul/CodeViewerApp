@@ -24,9 +24,9 @@
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
         <FrameLayout
+            android:id="@+id/fragment_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/fragment_container"/>
+            android:layout_height="match_parent" />
 
     </LinearLayout>
 
@@ -35,7 +35,6 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:layout_marginTop="56dp"
         android:fitsSystemWindows="true"
         app:headerLayout="@layout/nav_header_main"
         app:menu="@menu/activity_main_drawer" />

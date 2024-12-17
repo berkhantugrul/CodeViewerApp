@@ -1,5 +1,6 @@
 package com.example.codeviewerapp
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
@@ -170,7 +171,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             R.id.save_file -> {
                 saveFilePicker()
-
             }
 
             // Diğer işlemler
@@ -182,7 +182,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 startActivity(intent)
             }
 
-
             R.id.settings -> replaceFragment(SettingsFragment())
             R.id.about -> replaceFragment(AboutFragment())
             R.id.exit -> finish()
@@ -193,7 +192,22 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private fun saveFilePicker() {
-        saveFileResult.launch("text/plain")  // Metin dosyasını oluşturmak için
+
+        val suggestedFileName = when (selectedMimeType) {
+            "text/plain" -> "new_file.txt"
+            "application/python" -> "new_file.py"
+            "text/x-csrc" -> "new_file.c"
+            "text/x-c++src" -> "new_file.cpp"
+            else -> "new_file.txt"
+        }
+
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = selectedMimeType // Kaydedilecek MIME tipi
+            putExtra(Intent.EXTRA_TITLE, suggestedFileName) // Varsayılan dosya adı
+        }
+
+        saveFileResult.launch(intent)
     }
 
     private val openFileResult =
@@ -211,32 +225,58 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
     private val saveFileResult =
-        registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri: Uri? ->
-            uri?.let {
-                Log.d("SaveFileResult", "Info: BURADA")
-                // Dosyaya yazma işlemini yap
-                writeToFile(uri)
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    writeToFile(uri)
+                }
+            } else {
+                Toast.makeText(this, "File not saved", Toast.LENGTH_SHORT).show()
             }
         }
 
     private fun writeToFile(uri: Uri) {
-
-        // Dosyayı sıfırlayıp üzerine yazmak için 'openOutputStream' kullanıyoruz
-        contentResolver.openOutputStream(uri)?.use { outputStream ->
-            val writer = outputStream.bufferedWriter()
-            // Eski içeriği temizle ve yeni içeriği yaz
-            writer.write(findViewById<CodeView>(R.id.codeView).text.toString())  // write() ile dosyayı temizleyip yeni içeriği ekliyoruz
-            writer.flush()
+        try {
+            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                val writer = outputStream.bufferedWriter()
+                // CodeView içeriğini al ve yaz
+                writer.write(findViewById<CodeView>(R.id.codeView).text.toString())  // write() ile dosyayı temizleyip yeni içeriği ekliyoruz
+                writer.flush()
+            }
+            Toast.makeText(this, "File saved successfully!", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Error saving file", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun readTextFileContent(uri: Uri): String? {
         try {
             contentResolver.openInputStream(uri)?.use { inputStream ->
-                val bufferedReader = inputStream.bufferedReader()
-                return bufferedReader.readText()
+                val bufferedReader = inputStream.bufferedReader().use { it.readText() }
+
+                // Dosya içeriğini CodingFragment'e gönderiyoruz
+                val fileName = uri.path?.substringAfterLast("/")
+                val fileExtension = fileName?.substringAfterLast(".", "") ?: ""
+
+                Log.i("File Ext", "File$fileExtension")
+                // CodingFragment'e uzantıyı gönderiyoruz
+                val bundle = Bundle().apply {
+                    putString("fileExtension", fileExtension)
+                    putString("fileContent", bufferedReader)
+                }
+
+                // Kod içeriğini ve uzantıyı CodingFragment'e gönder
+                val codingFragment = CodingFragment().apply {
+                    arguments = bundle
+                }
+
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, codingFragment) // CodingFragment'ı göster
+                    .commit()
             }
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             e.printStackTrace()
         }
         return null

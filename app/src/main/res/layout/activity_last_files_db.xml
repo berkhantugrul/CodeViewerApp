@@ -13,8 +13,16 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
+        android:background="@drawable/rounded_button"
         android:text="Back"
         tools:ignore="HardcodedText" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginHorizontal="0dp"
+        android:layout_marginTop="30dp"
+        android:background="?attr/colorPrimary"/>
 
     <!-- TextView: Basit bir metin görüntülenmesi -->
     <TextView
@@ -23,8 +31,9 @@
         android:layout_height="wrap_content"
         android:text="@string/last_files_act_header"
         android:textSize="20sp"
-        android:layout_marginTop="20dp"
-        android:textColor="#000000" />
+        android:layout_marginTop="30dp"
+        android:textColor="?attr/colorPrimary"
+        android:textStyle="normal"/>
 
     <!-- Dosya listesini gösterecek RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView

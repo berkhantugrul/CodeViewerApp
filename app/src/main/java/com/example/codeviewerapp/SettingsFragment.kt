@@ -10,53 +10,88 @@ import android.view.ViewGroup
 import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import com.example.codeviewerapp.databinding.FragmentSettingsBinding
+
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
+
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private lateinit var showLineNumbersSwitch: Switch
+    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var binding: FragmentSettingsBinding
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_settings, container, false)
-    }
-
-    private lateinit var sharedPreferences: SharedPreferences
-
-    @SuppressLint("SetTextI18n")
-    override fun onViewCreated(view: android.view.View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        binding = FragmentSettingsBinding.inflate(inflater, container, false)
 
         // SharedPreferences ile tema durumunu kaydetme
-        sharedPreferences = requireActivity().getSharedPreferences("app_preferences", AppCompatActivity.MODE_PRIVATE)
+        sharedPreferences = requireActivity().getSharedPreferences("ThemePrefs", AppCompatActivity.MODE_PRIVATE)
+
+        // Kullanıcı tercihlerinden 'Show Line Numbers' switch'inin durumunu ayarla
+        val isShowLineNumbers = sharedPreferences.getBoolean("isShowLineNumbers", true)
+        binding.lineCheckBox.isChecked = isShowLineNumbers
+
+        // Show Line Numbers Switch listener
+        binding.lineCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            // Satır numaralarını göster ya da gizle
+            sharedPreferences.edit().putBoolean("isShowLineNumbers", isChecked).apply()
+            updateLineNumbersVisibility(isChecked)
+        }
+
+        // Başlangıçta satır numaralarını göster/gizle
+        updateLineNumbersVisibility(isShowLineNumbers)
+
+        return binding.root
+    }
+
+
+
+    @SuppressLint("SetTextI18n", "UseSwitchCompatOrMaterialCode")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         // Switch widget'ını al
         val themeSwitch = view.findViewById<Switch>(R.id.themeSwitch)
+        showLineNumbersSwitch = view.findViewById(R.id.lineCheckBox)
 
-        // Mevcut tema durumu kontrol et
-        val isDarkMode = sharedPreferences.getBoolean("is_dark_mode", false)
-        themeSwitch.isChecked = isDarkMode
+        // Cihazın mevcut temasını kontrol et
+        val currentNightMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
 
-        // Switch metnini güncelle
-        if (isDarkMode) {
+        // Eğer cihaz karanlık modda ise, switch'i işaretle
+        themeSwitch.isChecked = currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
+
+
+        if (themeSwitch.isChecked)
             themeSwitch.text = "Change Theme (Dark)"
-        } else {
+        else
             themeSwitch.text = "Change Theme (Light)"
-        }
 
-        // Switch durumu değiştiğinde tema değişimini yap
+        // Tema değiştirildiğinde kaydedelim
         themeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            // Tema değişimi yapılır
             if (isChecked) {
-                // Koyu moda geç
+                // Karanlık mod
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-                sharedPreferences.edit().putBoolean("is_dark_mode", true).apply() // Koyu mod kaydet
-                themeSwitch.text = "Change Theme (Dark)"
-            } else {
-                // Açık moda geç
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-                sharedPreferences.edit().putBoolean("is_dark_mode", false).apply() // Açık mod kaydet
                 themeSwitch.text = "Change Theme (Dark)"
             }
+            else {
+                // Aydınlık mod
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                themeSwitch.text = "Change Theme (Light)"
+            }
+
+            // Tema tercihini kaydedelim
+            sharedPreferences.edit().putBoolean("isDarkMode", isChecked).apply()
         }
+    }
+
+    private fun updateLineNumbersVisibility(show: Boolean) {
+        // CodingFragment'teki CodeView'e satır numaralarını göster/gizle
+        val codingFragment = parentFragmentManager.findFragmentByTag(CodingFragment::class.java.simpleName) as? CodingFragment
+        codingFragment?.setLineNumbers(show)
     }
 }
